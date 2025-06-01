@@ -5,8 +5,8 @@
     z_axis: 1
     yaw_axis: 0
 
-    takeoff_button: 8
-    land_button: 7
+    takeoff_button: 7
+    land_button: 6
 
     x_vel_max: 1.0
     y_vel_max: 1.0
