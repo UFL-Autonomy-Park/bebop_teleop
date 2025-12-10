@@ -29,9 +29,9 @@ def generate_launch_description():
             package='ros2_bebop_driver',
             executable='bebop_driver',
             name='bebop_driver_node',
-            namespace='bebop2',
+            namespace='bebop104',
             parameters=[
-                {'bebop_ip': '192.168.1.122'},
+                {'bebop_ip': '192.168.1.104'},
                 {'camera_calibration_file': 'package://ros2_bebop_driver/config/bebop2_camera_calib.yaml'}
             ]
         ),
@@ -39,7 +39,7 @@ def generate_launch_description():
             package='bebop_teleop',
             executable='bebop_teleop_node',
             name='bebop_teleop_node',
-            namespace='bebop2',
+            namespace='bebop104',
             parameters=[
                 os.path.join(get_package_share_directory('bebop_teleop'), 'param', 'xbox_controller.yaml'),
             ],

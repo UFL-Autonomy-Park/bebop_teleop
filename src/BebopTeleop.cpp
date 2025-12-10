@@ -26,6 +26,7 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
 
     this->get_parameter("takeoff_button", buttons_.takeoff.button);
     this->get_parameter("land_button", buttons_.land.button);
+    this->get_parameter("mode_button", buttons_.mode.button); // It will be "X" on the XBOX controller
 
     this->get_parameter("x_vel_max", axes_.x.factor);
     this->get_parameter("y_vel_max", axes_.y.factor);
@@ -36,13 +37,15 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
         axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button);
 
     // Publish setpoints at 50Hz
-    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::publish_setpoint, this));
+    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this));
     vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
     takeoff_pub_ = this->create_publisher<std_msgs::msg::Empty>("takeoff", 10);
     land_pub_ = this->create_publisher<std_msgs::msg::Empty>("land", 10);
 
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&BebopTeleop::joy_callback, this, _1));
+
+    RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->mode].c_str());
 }
 
 double BebopTeleop::get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis) {
@@ -88,16 +91,30 @@ void BebopTeleop::joy_callback(const sensor_msgs::msg::Joy::SharedPtr joy_msg) {
         button_state_.land.state = land_button_state;
     }
 
+    int mode_button_state = get_joy_button(joy_msg, buttons_.mode);
+    if (mode_button_state != button_state_.mode.state) {
+        if (mode_button_state == 1) {
+            RCLCPP_INFO(this->get_logger(), "Mode button pressed");
+            mode_switch();
+        }
+
+        button_state_.mode.state = mode_button_state;
+    }
+
     // Read stick values
-    setpoint_vel_.linear.x = get_joy_axis(joy_msg, axes_.x);
-    setpoint_vel_.linear.y = get_joy_axis(joy_msg, axes_.y);
-    setpoint_vel_.linear.z = get_joy_axis(joy_msg, axes_.z);
-    setpoint_vel_.angular.z = get_joy_axis(joy_msg, axes_.yaw);
+    setpoint_vel_desired_.linear.x = get_joy_axis(joy_msg, axes_.x);
+    setpoint_vel_desired_.linear.y = get_joy_axis(joy_msg, axes_.y);
+    setpoint_vel_desired_.linear.z = get_joy_axis(joy_msg, axes_.z);
+    setpoint_vel_desired_.angular.z = get_joy_axis(joy_msg, axes_.yaw);
 }
 
-void BebopTeleop::publish_setpoint() {
+void BebopTeleop::main_callback() {
     rclcpp::Time now = this->get_clock()->now();
-    vel_pub_->publish(setpoint_vel_);
+
+    if (this->mode == 0)
+    {
+        vel_pub_->publish(setpoint_vel_desired_);
+    }       
 }
 
 
@@ -122,6 +139,21 @@ void BebopTeleop::request_landing() {
     land_pub_->publish(land_msg);
 }
 
+void BebopTeleop::mode_switch() {
+    if (this->mode == 0)
+    {
+        RCLCPP_WARN(this->get_logger(), "Switching to offboard");
+        this->mode = 1;
+    }
+    else
+    {
+        RCLCPP_WARN(this->get_logger(), "Switching to teleop");
+        this->mode = 0;
+    }
+}
+
+
+// OLD ROS 1 code: 
 // void BebopTeleop::flying_state_callback(const bebop_msgs::Ardrone3PilotingStateFlyingStateChangedConstPtr &state_msg) {
 //     //Update the flying state
 //     flying_state_ = static_cast<bebop_flying_state>(state_msg->state);
