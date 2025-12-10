@@ -37,7 +37,6 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
         axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button);
 
     // Publish setpoints at 50Hz
-    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this));
     vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
     takeoff_pub_ = this->create_publisher<std_msgs::msg::Empty>("takeoff", 10);
@@ -46,6 +45,9 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&BebopTeleop::joy_callback, this, _1));
 
     RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->mode].c_str());
+
+    mode_pub_ = this->create_publisher<std_msgs::msg::Int32>("mode", 10);
+    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this));
 }
 
 double BebopTeleop::get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis) {
@@ -111,13 +113,15 @@ void BebopTeleop::joy_callback(const sensor_msgs::msg::Joy::SharedPtr joy_msg) {
 void BebopTeleop::main_callback() {
     rclcpp::Time now = this->get_clock()->now();
 
+    std_msgs::msg::Int32 mode_msg;
+    mode_msg.data = this->mode;
+    mode_pub_->publish(mode_msg);
+
     if (this->mode == 0)
     {
         vel_pub_->publish(setpoint_vel_desired_);
     }       
 }
-
-
 
 void BebopTeleop::request_takeoff() {
     // if (!is_flying()) {

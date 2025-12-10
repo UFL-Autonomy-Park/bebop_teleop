@@ -3,7 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <map>
-
+#include <std_msgs/msg/int32.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/joy.hpp>
@@ -14,6 +14,7 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
 
     rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr takeoff_pub_, land_pub_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr mode_pub_;
 
 	rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
@@ -57,6 +58,12 @@ private:
         ButtonState land;
         ButtonState mode;
     } button_state_;
+
+    enum ControlMode {
+        teleop = 0,
+        autonomous = 1,
+    };
+    ControlMode control_mode_;
 
     // enum bebop_flying_state {
     //     landed = 0,
