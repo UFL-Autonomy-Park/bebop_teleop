@@ -83,6 +83,7 @@ private:
         {1, "offboard"}
     };
     int mode = 0;
+    bool just_switched_out_of_offboard = false;
 
     double get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis);
     int get_joy_button(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Button &button);

@@ -26,7 +26,7 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
 
     this->get_parameter("takeoff_button", buttons_.takeoff.button);
     this->get_parameter("land_button", buttons_.land.button);
-    this->get_parameter("mode_button", buttons_.mode.button); // It will be "X" on the XBOX controller
+    this->get_parameter("mode_button", buttons_.mode.button); // It will be "A" on the XBOX controller
 
     this->get_parameter("x_vel_max", axes_.x.factor);
     this->get_parameter("y_vel_max", axes_.y.factor);
@@ -119,7 +119,16 @@ void BebopTeleop::main_callback() {
 
     if (this->mode == 0)
     {
+        if (just_switched_out_of_offboard) { 
+            just_switched_out_of_offboard = false;
+            setpoint_vel_desired_.linear.x = 0.0;
+            setpoint_vel_desired_.linear.y = 0.0;
+            setpoint_vel_desired_.linear.z = 0.0;
+            setpoint_vel_desired_.angular.z = 0.0;
+        }
+
         vel_pub_->publish(setpoint_vel_desired_);
+        
     }       
 }
 
@@ -153,6 +162,7 @@ void BebopTeleop::mode_switch() {
     {
         RCLCPP_WARN(this->get_logger(), "Switching to teleop");
         this->mode = 0;
+        just_switched_out_of_offboard = true;
     }
 }
 
