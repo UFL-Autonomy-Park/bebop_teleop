@@ -13,7 +13,7 @@ def generate_launch_description():
             namespace='vrpn_mocap',
             parameters=[
                 os.path.join(get_package_share_directory('vrpn_mocap'), 'config', 'client.yaml'),
-                {'server': '192.168.1.202'},
+                {'server': '192.168.1.201'},
                 {'port': 3883}
             ],
             output='screen'
