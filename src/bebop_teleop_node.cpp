@@ -1,3 +1,5 @@
+#include <memory>
+#include <rclcpp/rclcpp.hpp>
 #include "BebopTeleop.hpp"
 
 int main(int argc, char ** argv) {

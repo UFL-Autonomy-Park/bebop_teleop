@@ -2,7 +2,8 @@
 #define BEBOP_TELEOP_HPP
 
 #include <rclcpp/rclcpp.hpp>
-
+#include <map>
+#include <std_msgs/msg/int32.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/joy.hpp>
@@ -13,6 +14,7 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
 
     rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr takeoff_pub_, land_pub_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr mode_pub_;
 
 	rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
 
@@ -42,6 +44,7 @@ private:
     struct {
         Button takeoff;
         Button land;
+        Button mode;
     } buttons_;
 
     //Button state for debouncing
@@ -53,31 +56,46 @@ private:
     struct {
         ButtonState takeoff;
         ButtonState land;
+        ButtonState mode;
     } button_state_;
 
-    enum bebop_flying_state {
-        landed = 0,
-        taking_off,
-        hovering,
-        flying,
-        landing,
-        emergency,
-        user_takeoff,
-        motor_ramping,
-        emergency_landing
+    enum ControlMode {
+        teleop = 0,
+        autonomous = 1,
     };
+    ControlMode control_mode_;
 
-    geometry_msgs::msg::Twist setpoint_vel_;
+    // enum bebop_flying_state {
+    //     landed = 0,
+    //     taking_off,
+    //     hovering,
+    //     flying,
+    //     landing,
+    //     emergency,
+    //     user_takeoff,
+    //     motor_ramping,
+    //     emergency_landing
+    // };
+
+    geometry_msgs::msg::Twist setpoint_vel_desired_;
+    std::map<int, std::string> mode_str_dict = {
+        {0, "teleop"},
+        {1, "offboard"}
+    };
+    int mode = 0;
+    bool just_switched_out_of_offboard = false;
 
     double get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis);
     int get_joy_button(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Button &button);
     void joy_callback(const sensor_msgs::msg::Joy::SharedPtr joy_msg);
 
+
     // void flying_state_callback(const bebop_msgs::Ardrone3PilotingStateFlyingStateChangedConstPtr &flying_state_msg);
 
-    void publish_setpoint();
+    void main_callback();
     void request_takeoff();
     void request_landing();
+    void mode_switch();
     
 public:
 	BebopTeleop();
