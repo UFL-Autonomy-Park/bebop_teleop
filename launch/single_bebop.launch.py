@@ -65,8 +65,7 @@ def generate_launch_description():
             executable='filters_node',
             name='mocap_filters_node',
             output='screen',
-            parameters=[FILTERS_CFG],
-            namespace=f'/{BEBOP_NS}', # Namespace needs to start with / for global scope
+            parameters=[FILTERS_CFG]
         ),
         Node(
             package='rviz2',
