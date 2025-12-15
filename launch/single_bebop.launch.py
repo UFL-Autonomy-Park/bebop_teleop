@@ -26,7 +26,8 @@ def generate_launch_description():
     bebop_driver_params = [
         {'bebop_ip': '192.168.1.104'},
         {'camera_calibration_file': 'package://ros2_bebop_driver/config/bebop2_camera_calib.yaml'},
-        {'max_tilt_angle': 5.0}
+        {'max_tilt_angle': 15.0},
+        {'max_rotation_speed': 200.0},
     ]
 
     return LaunchDescription([
