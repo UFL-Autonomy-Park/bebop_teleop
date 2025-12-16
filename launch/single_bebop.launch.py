@@ -93,4 +93,12 @@ def generate_launch_description():
             output='screen',
             arguments=['--perspective-file', RQT_PLOT_CFG]
         ),
+        Node(
+            package='ncr_lab_viz',
+            executable='ncr_lab_viz_node',
+            name='ncr_lab_viz_node',
+            namespace='ncr_lab_viz',
+            parameters=[os.path.join(get_package_share_directory('ncr_lab_viz'), 'param', 'lab_geometry.yaml')],
+            output='screen'
+        ),
     ])
