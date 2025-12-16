@@ -13,16 +13,13 @@ def generate_launch_description():
     TELEOP_XBOX_CFG = cfg_path('bebop_teleop', 'param', 'xbox_controller.yaml')
     VRPN_CLIENT_CFG = cfg_path('vrpn_mocap', 'config', 'client.yaml')
     FIGURE_EIGHT_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'figure_eight_param.yaml')
-    
-    # RViz configuration path
     RViz_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'bebop_view.rviz')
+    RQT_PLOT_CFG = cfg_path('bebop_teleop', 'param', 'Default.perspective')
 
-    # Constants
     BEBOP_NS = 'bebop104'
     VRPN_SERVER_IP = '192.168.1.201'
     VRPN_SERVER_PORT = 3883
 
-    # Parameter list for the bebop_driver node
     bebop_driver_params = [
         {'bebop_ip': '192.168.1.104'},
         {'camera_calibration_file': 'package://ros2_bebop_driver/config/bebop2_camera_calib.yaml'},
@@ -88,5 +85,12 @@ def generate_launch_description():
             name='bebop_control_node',
             output='screen',
             parameters=[BEBOP_CONTROL_CFG]
-        )
+        ),
+        Node(
+            package='rqt_gui',
+            executable='rqt_gui',
+            name='rqt_gui',
+            output='screen',
+            arguments=['--perspective-file', RQT_PLOT_CFG]
+        ),
     ])
