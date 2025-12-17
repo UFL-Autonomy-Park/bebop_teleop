@@ -13,6 +13,7 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
     this->declare_parameter("yaw_axis", -1);
     this->declare_parameter("takeoff_button", -1);
     this->declare_parameter("land_button", -1);
+    this->declare_parameter("mode_button", -1);
 
     this->declare_parameter("x_vel_max", 1.0);
     this->declare_parameter("y_vel_max", 1.0);
@@ -26,28 +27,29 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
 
     this->get_parameter("takeoff_button", buttons_.takeoff.button);
     this->get_parameter("land_button", buttons_.land.button);
-    this->get_parameter("mode_button", buttons_.mode.button); // It will be "A" on the XBOX controller
+    this->get_parameter("mode_button", buttons_.mode.button); // "A" on the XBOX controller
 
     this->get_parameter("x_vel_max", axes_.x.factor);
     this->get_parameter("y_vel_max", axes_.y.factor);
     this->get_parameter("z_vel_max", axes_.z.factor);
     this->get_parameter("yaw_vel_max", axes_.yaw.factor);
 
-    RCLCPP_INFO(this->get_logger(), "Loaded controller parameters:\nX: %d, Y: %d, Z: %d, Yaw: %d, Takeoff: %d, Land: %d", 
-        axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button);
-
-    // Publish setpoints at 50Hz
+    // Publishers
     vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
-
     takeoff_pub_ = this->create_publisher<std_msgs::msg::Empty>("takeoff", 10);
     land_pub_ = this->create_publisher<std_msgs::msg::Empty>("land", 10);
+    mode_pub_ = this->create_publisher<std_msgs::msg::Int32>("mode", 10);
 
+    // Subscribers
     joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&BebopTeleop::joy_callback, this, _1));
 
-    RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->mode].c_str());
+    // Timer
+    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this)); // 50 Hz
 
-    mode_pub_ = this->create_publisher<std_msgs::msg::Int32>("mode", 10);
-    setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this));
+    // Log
+    RCLCPP_INFO(this->get_logger(), "Loaded controller parameters:\nX: %d, Y: %d, Z: %d, Yaw: %d, Takeoff: %d, Land: %d", 
+        axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button);
+    RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->mode].c_str());
 }
 
 double BebopTeleop::get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis) {

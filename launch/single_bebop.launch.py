@@ -8,7 +8,7 @@ def cfg_path(pkg, sub, filename):
 
 def generate_launch_description():
     BEBOP_CONTROL_CFG = cfg_path('bebop_control', 'param', 'bebop_param.yaml')
-    FILTERS_CFG = cfg_path('mocap_filters', 'config', 'filter_params.yaml')
+    FILTERS_CFG = cfg_path('mocap_filters', 'param', 'filter_params.yaml')
     TELEOP_JOY_CFG = cfg_path('bebop_teleop', 'param', 'joy_config.yaml')
     TELEOP_XBOX_CFG = cfg_path('bebop_teleop', 'param', 'xbox_controller.yaml')
     VRPN_CLIENT_CFG = cfg_path('vrpn_mocap', 'config', 'client.yaml')
