@@ -116,7 +116,7 @@ def generate_launch_description():
             ExecuteProcess(
                 cmd = [
                     'bash', '-c',
-                    f'ros2 bag record /bebop104/tracking_error /vrpn_mocap/bebop104/pose /bebop104/filtered_odom/rho /bebop104/filtered_odom/rushi_rho /bebop104/filtered_odom/dirty /bebop104/filtered_odom/levant /bebop104/filtered_odom/numeric /bebop104/cmd_vel /bebop104/trajectory_setpoint -o {output_dir}/{bag_name}_$(date +%Y_%m_%d-%H_%M_%S)'
+                    f'ros2 bag record /bebop104/tracking_error /vrpn_mocap/bebop104/pose /bebop104/filtered_odom/rho /bebop104/filtered_odom/rushi_rho /bebop104/filtered_odom/dirty /bebop104/filtered_odom/levant /bebop104/filtered_odom/numeric /bebop104/cmd_vel /bebop104/trajectory_setpoint /bebop104/mode -o {output_dir}/{bag_name}_$(date +%Y_%m_%d-%H_%M_%S)'
                 ],
                 output='screen'
             )
