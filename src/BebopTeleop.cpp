@@ -27,7 +27,7 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
 
     this->get_parameter("takeoff_button", buttons_.takeoff.button);
     this->get_parameter("land_button", buttons_.land.button);
-    this->get_parameter("mode_button", buttons_.mode.button); // "A" on the XBOX controller
+    this->get_parameter("mode_button", buttons_.mode.button); 
 
     this->get_parameter("x_vel_max", axes_.x.factor);
     this->get_parameter("y_vel_max", axes_.y.factor);
@@ -47,9 +47,9 @@ BebopTeleop::BebopTeleop() : Node("bebop_teleop_node") {
     setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this)); // 50 Hz
 
     // Log
-    RCLCPP_INFO(this->get_logger(), "Loaded controller parameters:\nX: %d, Y: %d, Z: %d, Yaw: %d, Takeoff: %d, Land: %d", 
-        axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button);
-    RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->mode].c_str());
+    RCLCPP_INFO(this->get_logger(), "Loaded controller parameters:\nX: %d, Y: %d, Z: %d, Yaw: %d, Takeoff: %d, Land: %d, Mode %d", 
+        axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button, buttons_.mode.button);
+    RCLCPP_INFO(this->get_logger(), "Control mode set to %s", this->mode_str_dict[this->control_mode_].c_str());
 }
 
 double BebopTeleop::get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis) {
@@ -116,56 +116,68 @@ void BebopTeleop::main_callback() {
     rclcpp::Time now = this->get_clock()->now();
 
     std_msgs::msg::Int32 mode_msg;
-    mode_msg.data = this->mode;
+    mode_msg.data = this->control_mode_;
     mode_pub_->publish(mode_msg);
 
-    if (this->mode == 0)
+    if (this->control_mode_ == teleop)
     {
-        if (just_switched_out_of_offboard) { 
-            just_switched_out_of_offboard = false;
-            setpoint_vel_desired_.linear.x = 0.0;
-            setpoint_vel_desired_.linear.y = 0.0;
-            setpoint_vel_desired_.linear.z = 0.0;
-            setpoint_vel_desired_.angular.z = 0.0;
-        }
-
-        vel_pub_->publish(setpoint_vel_desired_);
-        
+        vel_pub_->publish(setpoint_vel_desired_);        
     }       
 }
 
 void BebopTeleop::request_takeoff() {
-    // if (!is_flying()) {
-    RCLCPP_WARN(this->get_logger(), "Takeoff requested");
-
-    std_msgs::msg::Empty takeoff_msg;
-    takeoff_pub_->publish(takeoff_msg);
-    // }
+    if (this->control_mode_ == teleop)
+    {
+        RCLCPP_WARN(this->get_logger(), "Takeoff requested");
+        std_msgs::msg::Empty takeoff_msg;
+        takeoff_pub_->publish(takeoff_msg);
+    }
+    else if (this->control_mode_ == offboard)
+    {
+        RCLCPP_WARN(this->get_logger(), "Cannot take off in OFFBOARD mode");
+    }
 }
 
 void BebopTeleop::request_landing() {
     RCLCPP_WARN(this->get_logger(), "Landing requested");
 
+    // If not already in teleop, switch to teleop
+    if (this->control_mode_ == offboard)
+    {
+        mode_switch();
+    }
+
     // Send zero velocity command, delay 1 second, then land the drone
     geometry_msgs::msg::Twist cmd_vel_zero;
-    vel_pub_->publish(cmd_vel_zero);
-    rclcpp::sleep_for(1s);
+    // vel_pub_->publish(cmd_vel_zero);
+    // rclcpp::sleep_for(1s);
+    for(int i=0; i<5; i++) {
+        vel_pub_->publish(cmd_vel_zero);
+        rclcpp::sleep_for(20ms); // Small non-blocking-ish delay
+    }
     std_msgs::msg::Empty land_msg;
     land_pub_->publish(land_msg);
 }
 
 void BebopTeleop::mode_switch() {
-    if (this->mode == 0)
+    if (this->control_mode_ == teleop)
     {
-        RCLCPP_WARN(this->get_logger(), "Switching to offboard");
-        this->mode = 1;
+        RCLCPP_WARN(this->get_logger(), "Switching to OFFBOARD");
+        this->control_mode_ = offboard;
     }
     else
     {
-        RCLCPP_WARN(this->get_logger(), "Switching to teleop");
-        this->mode = 0;
-        just_switched_out_of_offboard = true;
+        RCLCPP_WARN(this->get_logger(), "Switching to TELEOP");
+        this->control_mode_ = teleop;
+        reset_velocity_setpoints();
     }
+}
+
+void BebopTeleop::reset_velocity_setpoints() {
+    setpoint_vel_desired_.linear.x = 0.0;
+    setpoint_vel_desired_.linear.y = 0.0;
+    setpoint_vel_desired_.linear.z = 0.0;
+    setpoint_vel_desired_.angular.z = 0.0;
 }
 
 

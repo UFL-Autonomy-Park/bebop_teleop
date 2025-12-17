@@ -61,9 +61,9 @@ private:
 
     enum ControlMode {
         teleop = 0,
-        autonomous = 1,
+        offboard = 1,
     };
-    ControlMode control_mode_;
+    ControlMode control_mode_ = teleop;
 
     // enum bebop_flying_state {
     //     landed = 0,
@@ -79,11 +79,9 @@ private:
 
     geometry_msgs::msg::Twist setpoint_vel_desired_;
     std::map<int, std::string> mode_str_dict = {
-        {0, "teleop"},
-        {1, "offboard"}
+        {0, "TELEOP"},
+        {1, "OFFBOARD"}
     };
-    int mode = 0;
-    bool just_switched_out_of_offboard = false;
 
     double get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis);
     int get_joy_button(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Button &button);
@@ -96,6 +94,7 @@ private:
     void request_takeoff();
     void request_landing();
     void mode_switch();
+    void reset_velocity_setpoints();
     
 public:
 	BebopTeleop();
