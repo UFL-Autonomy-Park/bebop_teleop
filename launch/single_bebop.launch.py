@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import ExecuteProcess
 
 def cfg_path(pkg, sub, filename):
     return os.path.join(get_package_share_directory(pkg), sub, filename)
@@ -13,12 +14,18 @@ def generate_launch_description():
     TELEOP_XBOX_CFG = cfg_path('bebop_teleop', 'param', 'xbox_controller.yaml')
     VRPN_CLIENT_CFG = cfg_path('vrpn_mocap', 'config', 'client.yaml')
     FIGURE_EIGHT_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'figure_eight_param.yaml')
-    RViz_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'bebop_view.rviz')
-    RQT_PLOT_CFG = cfg_path('bebop_teleop', 'param', 'Default.perspective')
+    RVIZ_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'bebop_view.rviz')
+    # RQT_PLOT_CFG = cfg_path('bebop_trajectory_tracking', 'param', 'bebop_rqt.perspective')
 
     BEBOP_NS = 'bebop104'
     VRPN_SERVER_IP = '192.168.1.201'
     VRPN_SERVER_PORT = 3883
+
+    # rosbag args
+    SAVE_DATA = True
+    output_dir = '/home/brandonfallin@ad.ufl.edu/bebop_ws/src/bebop_ws/experiment_data'
+    mode = 'rho' # rho, rushi_rho, dirty, levant, numeric
+    bag_name = f"differentiator_{mode}_data"
 
     bebop_driver_params = [
         {'bebop_ip': '192.168.1.104'},
@@ -27,7 +34,7 @@ def generate_launch_description():
         {'max_rotation_speed': 200.0},
     ]
 
-    return LaunchDescription([
+    launch_actions = [
         Node(
             package='vrpn_mocap',
             executable='client_node',
@@ -62,6 +69,7 @@ def generate_launch_description():
             package='mocap_filters',
             executable='filters_node',
             name='mocap_filters_node',
+            namespace=BEBOP_NS,
             output='screen',
             parameters=[FILTERS_CFG]
         ),
@@ -70,7 +78,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='screen',
-            arguments=['-d', RViz_CFG]
+            arguments=['-d', RVIZ_CFG]
         ),
         Node(
             package='bebop_trajectory_tracking',
@@ -86,13 +94,13 @@ def generate_launch_description():
             output='screen',
             parameters=[BEBOP_CONTROL_CFG]
         ),
-        Node(
-            package='rqt_gui',
-            executable='rqt_gui',
-            name='rqt_gui',
-            output='screen',
-            arguments=['--perspective-file', RQT_PLOT_CFG]
-        ),
+        # Node(
+        #     package='rqt_gui',
+        #     executable='rqt_gui',
+        #     name='rqt_gui',
+        #     output='screen',
+        #     arguments=['--perspective-file', RQT_PLOT_CFG]
+        # ),
         Node(
             package='ncr_lab_viz',
             executable='ncr_lab_viz_node',
@@ -101,4 +109,17 @@ def generate_launch_description():
             parameters=[os.path.join(get_package_share_directory('ncr_lab_viz'), 'param', 'lab_geometry.yaml')],
             output='screen'
         ),
-    ])
+    ]
+
+    if SAVE_DATA:
+        launch_actions.append(
+            ExecuteProcess(
+                cmd = [
+                    'bash', '-c',
+                    f'ros2 bag record /bebop104/tracking_error /vrpn_mocap/bebop104/pose /bebop104/filtered_odom/rho /bebop104/filtered_odom/rushi_rho /bebop104/filtered_odom/dirty /bebop104/filtered_odom/levant /bebop104/filtered_odom/numeric /bebop104/cmd_vel /bebop104/trajectory_setpoint -o {output_dir}/{bag_name}_$(date +%Y_%m_%d-%H_%M_%S)'
+                ],
+                output='screen'
+            )
+        )
+
+    return LaunchDescription(launch_actions)

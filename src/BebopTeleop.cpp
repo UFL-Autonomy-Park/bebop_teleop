@@ -149,8 +149,10 @@ void BebopTeleop::request_landing() {
 
     // Send zero velocity command, delay 1 second, then land the drone
     geometry_msgs::msg::Twist cmd_vel_zero;
-    // vel_pub_->publish(cmd_vel_zero);
-    // rclcpp::sleep_for(1s);
+    cmd_vel_zero.linear.x = 0.0;
+    cmd_vel_zero.linear.y = 0.0;
+    cmd_vel_zero.linear.z = 0.0;
+    cmd_vel_zero.angular.z = 0.0;
     for(int i=0; i<5; i++) {
         vel_pub_->publish(cmd_vel_zero);
         rclcpp::sleep_for(20ms); // Small non-blocking-ish delay
