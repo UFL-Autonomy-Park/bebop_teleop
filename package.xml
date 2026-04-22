@@ -4,7 +4,7 @@
     <name>bebop_teleop</name>
     <version>1.0.0</version>
     <description>TODO: Package description</description>
-    <maintainer email="uflautonomypark@gmail.com">autonomypark</maintainer>
+    <maintainer email="uflautonomypark@gmail.com">Max Gardenswartz, Brandon Fallin</maintainer>
     <license>Apache-2.0</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
