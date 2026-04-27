@@ -65,18 +65,6 @@ private:
     };
     ControlMode control_mode_ = teleop;
 
-    // enum bebop_flying_state {
-    //     landed = 0,
-    //     taking_off,
-    //     hovering,
-    //     flying,
-    //     landing,
-    //     emergency,
-    //     user_takeoff,
-    //     motor_ramping,
-    //     emergency_landing
-    // };
-
     geometry_msgs::msg::Twist setpoint_vel_desired_;
     std::map<int, std::string> mode_str_dict = {
         {0, "TELEOP"},
@@ -86,9 +74,6 @@ private:
     double get_joy_axis(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Axis &axis);
     int get_joy_button(const sensor_msgs::msg::Joy::SharedPtr &joy_msg, const Button &button);
     void joy_callback(const sensor_msgs::msg::Joy::SharedPtr joy_msg);
-
-
-    // void flying_state_callback(const bebop_msgs::Ardrone3PilotingStateFlyingStateChangedConstPtr &flying_state_msg);
 
     void main_callback();
     void request_takeoff();
