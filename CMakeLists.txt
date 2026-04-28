@@ -11,31 +11,20 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(
-    ${PROJECT_NAME}_node
-    src/bebop_teleop_node.cpp
-)
+add_executable(${PROJECT_NAME}_node src/bebop_teleop_node.cpp)
 
-ament_target_dependencies(
-    ${PROJECT_NAME}_node
+ament_target_dependencies(${PROJECT_NAME}_node
     rclcpp
     geometry_msgs
     sensor_msgs
     std_msgs
 )
 
-install(
-    TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-    DIRECTORY launch
-    DESTINATION share/${PROJECT_NAME}/
-)
-
-install(
-    DIRECTORY config
+install(DIRECTORY launch config
     DESTINATION share/${PROJECT_NAME}/
 )
 

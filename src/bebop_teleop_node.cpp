@@ -14,7 +14,6 @@ public:
     BebopTeleop() : Node("bebop_teleop_node") {
         RCLCPP_INFO(this->get_logger(), "Initializing Bebop Teleop Node");
 
-        // Joy axis and button config
         this->declare_parameter("x_axis", -1);
         this->declare_parameter("y_axis", -1);
         this->declare_parameter("z_axis", -1);
@@ -42,19 +41,15 @@ public:
         this->get_parameter("z_vel_max", axes_.z.factor);
         this->get_parameter("yaw_vel_max", axes_.yaw.factor);
 
-        // Publishers
         vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
         takeoff_pub_ = this->create_publisher<std_msgs::msg::Empty>("takeoff", 10);
         land_pub_ = this->create_publisher<std_msgs::msg::Empty>("land", 10);
         mode_pub_ = this->create_publisher<std_msgs::msg::Int32>("mode", 10);
 
-        // Subscribers
         joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>("/joy", 10, std::bind(&BebopTeleop::joy_callback, this, _1));
 
-        // Timer
-        setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this)); // 50 Hz
+        setpoint_timer_ = this->create_wall_timer(20ms, std::bind(&BebopTeleop::main_callback, this));
 
-        // Log
         RCLCPP_INFO(this->get_logger(), "Loaded controller parameters:\nX: %d, Y: %d, Z: %d, Yaw: %d, Takeoff: %d, Land: %d, Mode %d", 
             axes_.x.axis, axes_.y.axis, axes_.z.axis, axes_.yaw.axis, buttons_.takeoff.button, buttons_.land.button, buttons_.mode.button);
         
@@ -63,7 +58,6 @@ public:
     }
 
 private:
-    // Controller axis and button structs
     struct Axis {
         Axis() : axis(0), factor(0.0), offset(0.0) {}
         int axis;
@@ -89,7 +83,7 @@ private:
         Button mode;
     } buttons_;
 
-    //Button state for debouncing
+    // Button state for debouncing
     struct ButtonState {
         ButtonState() : state(0) {}
         int state;
@@ -105,6 +99,7 @@ private:
         TELEOP = 0,
         OFFBOARD = 1,
     };
+    
     FlightState flight_state_ = FlightState::TELEOP;
 
     geometry_msgs::msg::Twist setpoint_vel_desired_;
@@ -120,7 +115,6 @@ private:
             RCLCPP_ERROR(this->get_logger(), "Axis %d out of range, joy has %d axes", axis.axis, (int)joy_msg->axes.size());
             return -1;
         }
-
         double output = joy_msg->axes[std::abs(axis.axis)] * axis.factor + axis.offset;
         return output;
     }
@@ -130,12 +124,57 @@ private:
             RCLCPP_ERROR(this->get_logger(), "Button %d out of range, joy has %d buttons", button.button, (int)joy_msg->buttons.size());
             return -1;
         }
-
         return joy_msg->buttons[button.button];
     }
 
+    void request_takeoff() {
+        if (this->flight_state_ == FlightState::TELEOP) {
+            RCLCPP_WARN(this->get_logger(), "Takeoff requested");
+            std_msgs::msg::Empty takeoff_msg;
+            takeoff_pub_->publish(takeoff_msg);
+        } else if (this->flight_state_ == FlightState::OFFBOARD) {
+            RCLCPP_WARN(this->get_logger(), "Cannot take off in OFFBOARD mode");
+        }
+    }
+
+    void request_landing() {
+        RCLCPP_WARN(this->get_logger(), "Landing requested");
+        if (this->flight_state_ == FlightState::OFFBOARD) {
+            mode_switch();
+        }
+
+        geometry_msgs::msg::Twist cmd_vel_zero;
+        cmd_vel_zero.linear.x = 0.0;
+        cmd_vel_zero.linear.y = 0.0;
+        cmd_vel_zero.linear.z = 0.0;
+        cmd_vel_zero.angular.z = 0.0;
+        for(int i=0; i<5; i++) {
+            vel_pub_->publish(cmd_vel_zero);
+            rclcpp::sleep_for(20ms);
+        }
+        std_msgs::msg::Empty land_msg;
+        land_pub_->publish(land_msg);
+    }
+
+    void mode_switch() {
+        if (this->flight_state_ == FlightState::TELEOP) {
+            RCLCPP_WARN(this->get_logger(), "Switching to OFFBOARD");
+            this->flight_state_ = FlightState::OFFBOARD;
+        } else {
+            RCLCPP_WARN(this->get_logger(), "Switching to TELEOP");
+            this->flight_state_ = FlightState::TELEOP;
+            reset_velocity_setpoints();
+        }
+    }
+
+    void reset_velocity_setpoints() {
+        setpoint_vel_desired_.linear.x = 0.0;
+        setpoint_vel_desired_.linear.y = 0.0;
+        setpoint_vel_desired_.linear.z = 0.0;
+        setpoint_vel_desired_.angular.z = 0.0;
+    }
+
     void joy_callback(const sensor_msgs::msg::Joy::SharedPtr joy_msg) {
-        // Check for button presses
         int takeoff_button_state = get_joy_button(joy_msg, buttons_.takeoff);
         if (takeoff_button_state != button_state_.takeoff.state) {
             if (takeoff_button_state == 1) {
@@ -163,7 +202,6 @@ private:
             button_state_.mode.state = mode_button_state;
         }
 
-        // Read stick values
         setpoint_vel_desired_.linear.x = get_joy_axis(joy_msg, axes_.x);
         setpoint_vel_desired_.linear.y = get_joy_axis(joy_msg, axes_.y);
         setpoint_vel_desired_.linear.z = get_joy_axis(joy_msg, axes_.z);
@@ -178,56 +216,6 @@ private:
         if (this->flight_state_ == FlightState::TELEOP) {
             vel_pub_->publish(setpoint_vel_desired_);        
         }       
-    }
-
-    void request_takeoff() {
-        if (this->flight_state_ == FlightState::TELEOP) {
-            RCLCPP_WARN(this->get_logger(), "Takeoff requested");
-            std_msgs::msg::Empty takeoff_msg;
-            takeoff_pub_->publish(takeoff_msg);
-        } else if (this->flight_state_ == FlightState::OFFBOARD) {
-            RCLCPP_WARN(this->get_logger(), "Cannot take off in OFFBOARD mode");
-        }
-    }
-
-    void request_landing() {
-        RCLCPP_WARN(this->get_logger(), "Landing requested");
-
-        // If not already in teleop, switch to teleop
-        if (this->flight_state_ == FlightState::OFFBOARD) {
-            mode_switch();
-        }
-
-        // Send zero velocity command, delay 1 second, then land the drone
-        geometry_msgs::msg::Twist cmd_vel_zero;
-        cmd_vel_zero.linear.x = 0.0;
-        cmd_vel_zero.linear.y = 0.0;
-        cmd_vel_zero.linear.z = 0.0;
-        cmd_vel_zero.angular.z = 0.0;
-        for(int i=0; i<5; i++) {
-            vel_pub_->publish(cmd_vel_zero);
-            rclcpp::sleep_for(20ms); // Small non-blocking-ish delay
-        }
-        std_msgs::msg::Empty land_msg;
-        land_pub_->publish(land_msg);
-    }
-
-    void mode_switch() {
-        if (this->flight_state_ == FlightState::TELEOP) {
-            RCLCPP_WARN(this->get_logger(), "Switching to OFFBOARD");
-            this->flight_state_ = FlightState::OFFBOARD;
-        } else {
-            RCLCPP_WARN(this->get_logger(), "Switching to TELEOP");
-            this->flight_state_ = FlightState::TELEOP;
-            reset_velocity_setpoints();
-        }
-    }
-
-    void reset_velocity_setpoints() {
-        setpoint_vel_desired_.linear.x = 0.0;
-        setpoint_vel_desired_.linear.y = 0.0;
-        setpoint_vel_desired_.linear.z = 0.0;
-        setpoint_vel_desired_.angular.z = 0.0;
     }
 };
 
