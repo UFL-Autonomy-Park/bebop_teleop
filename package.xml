@@ -3,7 +3,7 @@
 <package format="3">
     <name>bebop_teleop</name>
     <version>2.0.0</version>
-    <description>Maps console controller (e.g., XBOX, PS4, etc.) to actions for a single Bebop</description>
+    <description>Maps console controller (e.g., XBOX or Dualshock PS) to actions for a single Bebop</description>
     <maintainer email="mgardenswartz@ufl.edu">Max Gardenswartz, Brandon Fallin, William Warke</maintainer>
     <license>TODO: License declaration</license>
 

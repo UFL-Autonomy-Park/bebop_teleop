@@ -35,7 +35,7 @@ install(
 )
 
 install(
-    DIRECTORY param
+    DIRECTORY config
     DESTINATION share/${PROJECT_NAME}/
 )
 
