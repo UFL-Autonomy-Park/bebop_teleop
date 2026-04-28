@@ -2,9 +2,9 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
     <name>bebop_teleop</name>
-    <version>1.0.0</version>
-    <description>TODO: Package description</description>
-    <maintainer email="mgardenswartz@ufl.edu">Max Gardenswartz, Brandon Fallin</maintainer>
+    <version>2.0.0</version>
+    <description>Maps console controller (e.g., XBOX, PS4, etc.) to actions for a single Bebop</description>
+    <maintainer email="mgardenswartz@ufl.edu">Max Gardenswartz, Brandon Fallin, William Warke</maintainer>
     <license>TODO: License declaration</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
