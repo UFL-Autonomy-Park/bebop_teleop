@@ -9,7 +9,7 @@ def generate_launch_description():
             package='joy',
             executable='joy_node',
             name='joy_node',
-            parameters=[os.path.join(get_package_share_directory('bebop_teleop'), 'param', 'joy_config.yaml')],
+            parameters=[os.path.join(get_package_share_directory('bebop_teleop'), 'config', 'joy_config.yaml')],
             output='screen'
         ),
         Node(
@@ -17,7 +17,7 @@ def generate_launch_description():
             executable='bebop_teleop_node',
             name='bebop_teleop_node',
             parameters=[
-                os.path.join(get_package_share_directory('bebop_teleop'), 'param', 'xbox_controller.yaml'),
+                os.path.join(get_package_share_directory('bebop_teleop'), 'config', 'xbox_controller.yaml'),
             ],
             output='screen'
         ),
