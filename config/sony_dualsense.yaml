@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    x_axis: 0 # LEFT STICK UP/DOWN
+    y_axis: 1 # LEFT STICK RIGHT/LEFT
+    z_axis: 4 # RIGHT STICK UP/DOWN
+    yaw_axis: 3 # RIGHT STICK LEFT/RIGHT
+
+    takeoff_button: 9 # OPTIONS (START) BUTTON
+    land_button: 8 # CREATE (SELECT) BUTTON
+    mode_button: 0 # X (CROSS) BUTTON
+
+    x_vel_max: 1.0
+    y_vel_max: 1.0
+    z_vel_max: 1.0
+    yaw_vel_max: 1.0
